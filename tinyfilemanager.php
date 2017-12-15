@@ -26,6 +26,9 @@ $readonly_users = array(
 // Show or hide files and folders that starts with a dot
 $show_hidden_files = true;
 
+// The maximum tree depth
+$max_tree_depth = 3;
+
 // Enable highlight.js (https://highlightjs.org/) on view's page
 $use_highlightjs = true;
 
@@ -182,6 +185,7 @@ $p = fm_clean_path($p);
 define('FM_PATH', $p);
 define('FM_USE_AUTH', $use_auth);
 define('FM_EDIT_FILE', $edit_files);
+define('FM_MAX_TREE_DEPTH', $max_tree_depth);
 defined('FM_ICONV_INPUT_ENC') || define('FM_ICONV_INPUT_ENC', $iconv_input_encoding);
 defined('FM_USE_HIGHLIGHTJS') || define('FM_USE_HIGHLIGHTJS', $use_highlightjs);
 defined('FM_HIGHLIGHTJS_STYLE') || define('FM_HIGHLIGHTJS_STYLE', $highlightjs_style);
@@ -1562,10 +1566,12 @@ function scan($dir){
 /**
 * Scan directory and return tree view
 * @param string $directory
+* @param integer $max_depth
 * @param boolean $first_call
 */
-function php_file_tree_dir($directory, $first_call = true) {
+function php_file_tree_dir($directory, $max_depth, $first_call = true) {
 	// Recursive function called by php_file_tree() to list directories/files
+        if( $max_depth == 0 ) return "";
 	$php_file_tree = "";
 	// Get and sort directories/files
 	if( function_exists("scandir") ) $file = scandir($directory);
@@ -1576,7 +1582,7 @@ function php_file_tree_dir($directory, $first_call = true) {
 		if( is_dir("$directory/$this_file" ) ) $dirs[] = $this_file; else $files[] = $this_file;
 	}
 	$file = array_merge($dirs, $files);
-	
+
 	if( count($file) > 2 ) { // Use 2 instead of 0 to account for . and .. "directories"
 		$php_file_tree = "<ul";
 		if( $first_call ) { $php_file_tree .= " class=\"php-file-tree\""; $first_call = false; }
@@ -1586,7 +1592,7 @@ function php_file_tree_dir($directory, $first_call = true) {
 				if( is_dir("$directory/$this_file") ) {
 					// Directory
 					$php_file_tree .= "<li class=\"pft-directory\"><i class=\"fa fa-folder-o\"></i><a href=\"#\">" . htmlspecialchars($this_file) . "</a>";
-					$php_file_tree .= php_file_tree_dir("$directory/$this_file", false);
+					$php_file_tree .= php_file_tree_dir("$directory/$this_file", $max_depth - 1, false);
 					$php_file_tree .= "</li>";
 				} else {
 					// File
@@ -1611,7 +1617,7 @@ function php_file_tree($directory) {
     $code = "";
     if( substr($directory, -1) == "/" ) $directory = substr($directory, 0, strlen($directory) - 1);
     if(function_exists('php_file_tree_dir')) {
-        $code .= php_file_tree_dir($directory);
+        $code .= php_file_tree_dir($directory, FM_MAX_TREE_DEPTH);
         return $code;
     }
 }
