@@ -92,6 +92,7 @@ if (defined('FM_EMBED')) {
     session_cache_limiter('');
     session_name('filemanager');
     session_start();
+    session_regenerate_id();
 }
 
 if (empty($auth_users)) {
